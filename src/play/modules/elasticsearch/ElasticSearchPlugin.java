@@ -66,7 +66,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	private static boolean blockEvents = false;
 
 	/** The mapper factory */
-	private static MapperFactory mapperFactory = new DefaultMapperFactory();
+	private static MapperFactory mapperFactory = null;
 
 	/** The mappers index. */
 	private static Map<Class<?>, ModelMapper<?>> mappers = null;
@@ -162,6 +162,13 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		mappers = new HashMap<Class<?>, ModelMapper<?>>();
 		modelLookup = new HashMap<String, Class<?>>();
 		indicesStarted = new HashSet<Class<?>>();
+		
+		if (Play.configuration.containsKey("elasticsearch.indexprefix")) {
+			mapperFactory = new DefaultMapperFactory(Play.configuration.getProperty("elasticsearch.indexprefix"));
+		} else {
+			mapperFactory = new DefaultMapperFactory();
+		}
+		
 		ReflectionUtil.clearCache();
 
 		// Make sure it doesn't get started more than once
