@@ -27,7 +27,6 @@ import play.modules.elasticsearch.util.ReflectionUtil;
  *            the model type
  */
 public class PlayModelMapper<M extends Model> implements ModelMapper<M> {
-
 	/** The play-specific fields to ignore. */
 	private static List<String> IGNORE_FIELDS = new ArrayList<String>();
 	static {
@@ -40,12 +39,20 @@ public class PlayModelMapper<M extends Model> implements ModelMapper<M> {
 	private final Class<M> clazz;
 	private final ElasticSearchable meta;
 	private final List<FieldMapper<M>> mapping;
+	private String indexPrefix = "";
 
-	public PlayModelMapper(MapperFactory factory, Class<M> clazz) {
+	public PlayModelMapper(MapperFactory factory, Class<M> clazz, String indexPrefix) {
 		Validate.notNull(clazz, "Clazz cannot be null");
 		this.clazz = clazz;
 		this.meta = clazz.getAnnotation(ElasticSearchable.class);
 
+		if (this.indexPrefix != null) {
+			this.indexPrefix = indexPrefix; 
+		} else {
+			this.indexPrefix = "";
+		}
+		
+		
 		// Create mapping
 		mapping = getMapping(factory, clazz);
 	}
@@ -111,9 +118,9 @@ public class PlayModelMapper<M extends Model> implements ModelMapper<M> {
 	@Override
 	public String getIndexName() {
 		if (meta.indexName().length() > 0) {
-			return meta.indexName();
+			return indexPrefix + meta.indexName();
 		} else {
-			return getTypeName();
+			return indexPrefix + getTypeName();
 		}
 	}
 
