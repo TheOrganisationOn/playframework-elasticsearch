@@ -18,6 +18,8 @@
  */
 package play.modules.elasticsearch.adapter;
 
+import java.io.IOException;
+
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
@@ -123,7 +125,7 @@ public abstract class ElasticSearchAdapter {
 	 *             the exception
 	 */
 	public static <T> void indexModel(Client client, ModelMapper<T> mapper, T model)
-			throws Exception {
+			throws IOException {
 		Logger.debug("Index Model: %s", model);
 
 		// Check Client
