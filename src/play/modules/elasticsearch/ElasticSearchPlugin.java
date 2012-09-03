@@ -18,14 +18,12 @@
  */
 package play.modules.elasticsearch;
 
-import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
+import static org.elasticsearch.node.NodeBuilder.*;
 
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -98,6 +96,10 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		mappers.clear();
 	}
 
+	public static MapperFactory getMapperFactory() {
+		return mapperFactory;
+	}
+
 	/**
 	 * Checks if is local mode.
 	 * 
@@ -145,9 +147,10 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		if (s == null) {
 			return ElasticSearchDeliveryMode.LOCAL;
 		}
-		if ("CUSTOM".equals(s))
+		if ("CUSTOM".equals(s)) {
 			return ElasticSearchDeliveryMode.createCustomIndexEventHandler(Play.configuration.getProperty(
 					"elasticsearch.customIndexEventHandler", "play.modules.elasticsearch.LocalIndexEventHandler"));
+		}
 		return ElasticSearchDeliveryMode.valueOf(s.toUpperCase());
 	}
 
@@ -162,13 +165,9 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		mappers = new HashMap<Class<?>, ModelMapper<?>>();
 		modelLookup = new HashMap<String, Class<?>>();
 		indicesStarted = new HashSet<Class<?>>();
-		
-		if (Play.configuration.containsKey("elasticsearch.indexprefix")) {
-			mapperFactory = new DefaultMapperFactory(Play.configuration.getProperty("elasticsearch.indexprefix"));
-		} else {
-			mapperFactory = new DefaultMapperFactory();
-		}
-		
+
+		mapperFactory = new DefaultMapperFactory(getIndexPrefix());
+
 		ReflectionUtil.clearCache();
 
 		// Make sure it doesn't get started more than once
@@ -179,7 +178,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 
 		// Start Node Builder
 		final Builder settings = ImmutableSettings.settingsBuilder();
-		//settings.put("client.transport.sniff", true);
+		// settings.put("client.transport.sniff", true);
 
 		// Import anything from play configuration that starts with elasticsearch.native.
 		Enumeration<Object> keys = Play.configuration.keys();
@@ -216,8 +215,9 @@ public class ElasticSearchPlugin extends PlayPlugin {
 					throw new RuntimeException("Invalid Host: " + host);
 				}
 				Logger.info("Transport Client - Host: %s Port: %s", parts[0], parts[1]);
-				if (Integer.valueOf(parts[1]) == 9200)
+				if (Integer.valueOf(parts[1]) == 9200) {
 					Logger.info("Note: Port 9200 is usually used by the HTTP Transport. You might want to use 9300 instead.");
+				}
 				c.addTransportAddress(new InetSocketTransportAddress(parts[0], Integer.valueOf(parts[1])));
 				done = true;
 			}
@@ -234,6 +234,14 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		if (client == null) {
 			throw new RuntimeException(
 					"Elastic Search Client cannot be null - please check the configuration provided and the health of your Elastic Search instances.");
+		}
+	}
+
+	public static String getIndexPrefix() {
+		if (Play.configuration.containsKey("elasticsearch.indexprefix")) {
+			return Play.configuration.getProperty("elasticsearch.indexprefix");
+		} else {
+			return "";
 		}
 	}
 

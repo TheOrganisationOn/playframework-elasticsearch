@@ -49,7 +49,7 @@ public abstract class ElasticSearchAdapter {
 	 * @param mapper
 	 *            the model mapper
 	 */
-	public static <T extends Model> void startIndex(Client client, ModelMapper<T> mapper) {
+	public static <T> void startIndex(Client client, ModelMapper<T> mapper) {
 		createIndex(client, mapper);
 		createType(client, mapper);
 	}
@@ -122,7 +122,7 @@ public abstract class ElasticSearchAdapter {
 	 * @throws Exception
 	 *             the exception
 	 */
-	public static <T extends Model> void indexModel(Client client, ModelMapper<T> mapper, T model)
+	public static <T> void indexModel(Client client, ModelMapper<T> mapper, T model)
 			throws Exception {
 		Logger.debug("Index Model: %s", model);
 

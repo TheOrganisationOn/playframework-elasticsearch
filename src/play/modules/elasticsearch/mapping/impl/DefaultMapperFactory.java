@@ -36,6 +36,7 @@ public class DefaultMapperFactory implements MapperFactory {
 	 *             in case of mapping problems
 	 * @return the model mapper
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public <M> ModelMapper<M> getMapper(Class<M> clazz) throws MappingException {
 		if (clazz.equals(play.db.Model.class)) {
@@ -50,8 +51,7 @@ public class DefaultMapperFactory implements MapperFactory {
 			return (ModelMapper<M>) new PlayModelMapper<play.db.Model>(this,
 					(Class<play.db.Model>) clazz, indexPrefix);
 		} else {
-			throw new MappingException(
-					"No mapper available for non-play.db.Model models at this time");
+			return new AnyClassMapper<M>(this, clazz, indexPrefix);
 		}
 	}
 
@@ -66,6 +66,7 @@ public class DefaultMapperFactory implements MapperFactory {
 	 *             in case of mapping problems
 	 * @return the field mapper
 	 */
+	@Override
 	public <M> FieldMapper<M> getMapper(Field field) throws MappingException {
 
 		return getMapper(field, null);
@@ -83,6 +84,7 @@ public class DefaultMapperFactory implements MapperFactory {
 	 *             in case of mapping problems
 	 * @return the field mapper
 	 */
+	@Override
 	public <M> FieldMapper<M> getMapper(Field field, String prefix) throws MappingException {
 
 		if (Collection.class.isAssignableFrom(field.getType())) {
