@@ -1,4 +1,4 @@
-self: custom-modules -> elasticsearch 0.5.2
+self: custom-modules -> elasticsearch 0.5.3
 
 # Application dependencies
 
