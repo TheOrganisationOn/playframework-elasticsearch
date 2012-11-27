@@ -280,7 +280,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	@Override
 	public void onEvent(final String message, final Object context) {
 		// Log Debug
-		Logger.info("Received %s Event, Object: %s", message, context);
+		Logger.debug("Received %s Event, Object: %s", message, context);
 
 		if (isInterestingEvent(message) == false) {
 			return;
@@ -323,7 +323,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		}
 
 		// Sync with Elastic Search
-		Logger.info("Elastic Search Index Event: %s", event);
+		Logger.debug("Elastic Search Index Event: %s", event);
 		if (event != null) {
 			final ElasticSearchDeliveryMode deliveryMode = getDeliveryMode();
 			final IndexEventHandler handler = deliveryMode.getHandler();
