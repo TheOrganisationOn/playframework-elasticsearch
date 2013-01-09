@@ -19,6 +19,10 @@
 package play.modules.elasticsearch;
 
 import static org.elasticsearch.node.NodeBuilder.*;
+import io.searchbox.client.JestClient;
+import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.config.ClientConfig;
+import io.searchbox.client.config.ClientConstants;
 
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -30,10 +34,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.lang.Validate;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
@@ -42,7 +44,6 @@ import play.Play;
 import play.PlayPlugin;
 import play.db.Model;
 import play.modules.elasticsearch.ElasticSearchIndexEvent.Type;
-import play.modules.elasticsearch.adapter.ElasticSearchAdapter;
 import play.modules.elasticsearch.mapping.MapperFactory;
 import play.modules.elasticsearch.mapping.MappingUtil;
 import play.modules.elasticsearch.mapping.ModelMapper;
@@ -51,10 +52,8 @@ import play.modules.elasticsearch.util.ExceptionUtil;
 import play.modules.elasticsearch.util.ReflectionUtil;
 import play.mvc.Router;
 
-// TODO: Auto-generated Javadoc
-/**
- * The Class ElasticSearchPlugin.
- */
+import com.google.common.collect.Sets;
+
 public class ElasticSearchPlugin extends PlayPlugin {
 
 	/** The started. */
@@ -75,20 +74,16 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	/** Index type -> Class lookup */
 	private static Map<String, Class<?>> modelLookup = null;
 
-	/** The client. */
-	private static Client client = null;
+	// NoTCprivate static Client client = null;
 
 	private static final Queue<Model> blockedIndexOperations = new ConcurrentLinkedQueue<Model>();
 
 	private static final Queue<Model> blockedDeleteOperations = new ConcurrentLinkedQueue<Model>();
 
-	/**
-	 * Client.
-	 * 
-	 * @return the client
-	 */
+	private static JestClient jestClient;
+
 	public static Client client() {
-		return client;
+		return null;
 	}
 
 	public static void setMapperFactory(final MapperFactory factory) {
@@ -170,12 +165,6 @@ public class ElasticSearchPlugin extends PlayPlugin {
 
 		ReflectionUtil.clearCache();
 
-		// Make sure it doesn't get started more than once
-		if ((client != null) || started) {
-			Logger.debug("Elastic Search Started Already!");
-			return;
-		}
-
 		// Start Node Builder
 		final Builder settings = ImmutableSettings.settingsBuilder();
 		// settings.put("client.transport.sniff", true);
@@ -195,14 +184,15 @@ public class ElasticSearchPlugin extends PlayPlugin {
 
 		// Check Model
 		if (this.isLocalMode()) {
+			connectToLocalUsingJest();
 			Logger.info("Starting Elastic Search for Play! in Local Mode");
 			final NodeBuilder nb = nodeBuilder().settings(settings).local(true).client(false).data(true);
 			final Node node = nb.node();
-			client = node.client();
+			// client = node.client();
 
 		} else {
 			Logger.info("Connecting Play! to Elastic Search in Client Mode");
-			final TransportClient c = new TransportClient(settings);
+			// NoTC final TransportClient c = new TransportClient(settings);
 			if (Play.configuration.getProperty("elasticsearch.client") == null) {
 				throw new RuntimeException(
 						"Configuration required - elasticsearch.client when local model is disabled!");
@@ -218,23 +208,37 @@ public class ElasticSearchPlugin extends PlayPlugin {
 				if (Integer.valueOf(parts[1]) == 9200) {
 					Logger.info("Note: Port 9200 is usually used by the HTTP Transport. You might want to use 9300 instead.");
 				}
-				c.addTransportAddress(new InetSocketTransportAddress(parts[0], Integer.valueOf(parts[1])));
+				// NoTC c.addTransportAddress(new InetSocketTransportAddress(parts[0], Integer.valueOf(parts[1])));
 				done = true;
 			}
 			if (done == false) {
 				throw new RuntimeException("No Hosts Provided for Elastic Search!");
 			}
-			client = c;
+			// NoTC client = c;
 		}
 
 		// Bind Admin
 		Router.addRoute("GET", "/es-admin", "elasticsearch.ElasticSearchAdmin.index");
 
 		// Check Client
-		if (client == null) {
-			throw new RuntimeException(
-					"Elastic Search Client cannot be null - please check the configuration provided and the health of your Elastic Search instances.");
-		}
+		// if (client == null) {
+		// throw new RuntimeException(
+		// "Elastic Search Client cannot be null - please check the configuration provided and the health of your Elastic Search instances.");
+		// }
+	}
+
+	private void connectToLocalUsingJest() {
+		ClientConfig clientConfig = new ClientConfig();
+		Set<String> servers = Sets.newLinkedHashSet(Sets.newHashSet("http://localhost:9200"));// TODO take from conf
+		clientConfig.getServerProperties().put(ClientConstants.SERVER_LIST, servers);
+
+		JestClientFactory factory = new JestClientFactory();
+		factory.setClientConfig(clientConfig);
+		jestClient = factory.getObject();
+	}
+
+	public static JestClient getJestClient() {
+		return jestClient;
 	}
 
 	public static String getIndexPrefix() {
@@ -262,7 +266,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		if (!indicesStarted.contains(clazz)) {
 			final ModelMapper<Model> mapper = getMapper(clazz);
 			Logger.info("Start Index for Class: %s", clazz);
-			ElasticSearchAdapter.startIndex(client(), mapper);
+			// ElasticSearchAdapter.startIndex(client(), mapper);
 			indicesStarted.add(clazz);
 		}
 	}
@@ -355,12 +359,12 @@ public class ElasticSearchPlugin extends PlayPlugin {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
 
-				ElasticSearchAdapter.indexModel(client, mapper, model);
+				// ElasticSearchAdapter.indexModel(client, mapper, model);
 			}
 			while ((model = blockedDeleteOperations.poll()) != null) {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
-				ElasticSearchAdapter.deleteModel(client, mapper, model);
+				// ElasticSearchAdapter.deleteModel(client, mapper, model);
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();

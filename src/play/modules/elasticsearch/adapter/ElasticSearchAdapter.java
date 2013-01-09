@@ -18,6 +18,9 @@
  */
 package play.modules.elasticsearch.adapter;
 
+import io.searchbox.client.JestClient;
+import io.searchbox.indices.CreateIndex;
+
 import java.io.IOException;
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -34,6 +37,7 @@ import org.elasticsearch.indices.IndexAlreadyExistsException;
 
 import play.Logger;
 import play.db.Model;
+import play.modules.elasticsearch.ElasticSearchPlugin;
 import play.modules.elasticsearch.mapping.MappingUtil;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.util.ExceptionUtil;
@@ -187,4 +191,12 @@ public abstract class ElasticSearchAdapter {
 
 	}
 
+	public static void startIndex(ModelMapper<?> mapper) {
+		JestClient jestClient = ElasticSearchPlugin.getJestClient();
+		try {
+			jestClient.execute(new CreateIndex(mapper.getIndexName()));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

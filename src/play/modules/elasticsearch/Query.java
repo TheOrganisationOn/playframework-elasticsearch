@@ -1,5 +1,8 @@
 package play.modules.elasticsearch;
 
+import io.searchbox.client.JestResult;
+import io.searchbox.core.Search;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +17,7 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import play.Logger;
 import play.db.Model;
+import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
 import play.modules.elasticsearch.transformer.JPATransformer;
 import play.modules.elasticsearch.transformer.MapperTransformer;
@@ -150,6 +154,20 @@ public class Query<T extends Model> {
 	 * @return the search results
 	 */
 	public SearchResults<T> fetch() {
+		ModelMapper<T> mapper = ElasticSearchPlugin.getMapper(clazz);
+		String index = mapper.getIndexName();
+		Search search = new Search(Search.createQueryWithBuilder(builder.toString()));
+		search.addIndex(index);
+
+		try {
+			JestResult result = ElasticSearchPlugin.getJestClient().execute(search);
+			List<T> objects = result.getSourceAsObjectList(clazz);
+			return new SearchResults<T>(objects.size(), objects, null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		// Build request
 		SearchRequestBuilder request = ElasticSearch.builder(builder, clazz);
 
