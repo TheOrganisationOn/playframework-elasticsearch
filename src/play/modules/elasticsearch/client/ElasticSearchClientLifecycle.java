@@ -10,18 +10,14 @@ public class ElasticSearchClientLifecycle {
 		return elasticClient != null;
 	}
 
-	public void start() {
-		if (configuredToUseTransportClient()) {
+	public void start(boolean useTransportClient) {
+		if (useTransportClient) {
 			elasticClient = new ElasticSearchTransportClient();
 		} else {
+			elasticClient = null;
 			// todo Jest impl;
 		}
 		elasticClient.start();
-	}
-
-	private boolean configuredToUseTransportClient() {
-		// TODO get from play conf
-		return true;
 	}
 
 	public boolean notStarted() {

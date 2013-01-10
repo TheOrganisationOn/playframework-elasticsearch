@@ -63,22 +63,20 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	/** Index type -> Class lookup */
 	private static Map<String, Class<?>> modelLookup = null;
 
-	/** The client. */
-	private static Client client = null;
-
 	private static ElasticSearchClientLifecycle elasticClientLifecycle = new ElasticSearchClientLifecycle();
 
 	private static final Queue<Model> blockedIndexOperations = new ConcurrentLinkedQueue<Model>();
 
 	private static final Queue<Model> blockedDeleteOperations = new ConcurrentLinkedQueue<Model>();
 
-	/**
-	 * Client.
-	 * 
-	 * @return the client
-	 */
+	// TODO usages of this method should be removed and moved to a common 'elastic interface'
 	public static Client client() {
 		return elasticClientLifecycle.getTransportClient();
+	}
+
+	private static boolean shouldUseTransportClient() {
+		// TODO get from property
+		return true;
 	}
 
 	public static void setMapperFactory(final MapperFactory factory) {
@@ -129,8 +127,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 			return;
 		}
 
-		elasticClientLifecycle.start();
-		// Check Model
+		elasticClientLifecycle.start(shouldUseTransportClient());
 
 		// Bind Admin
 		Router.addRoute("GET", "/es-admin", "elasticsearch.ElasticSearchAdmin.index");
@@ -260,12 +257,12 @@ public class ElasticSearchPlugin extends PlayPlugin {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
 
-				ElasticSearchAdapter.indexModel(client, mapper, model);
+				ElasticSearchAdapter.indexModel(client(), mapper, model);
 			}
 			while ((model = blockedDeleteOperations.poll()) != null) {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
-				ElasticSearchAdapter.deleteModel(client, mapper, model);
+				ElasticSearchAdapter.deleteModel(client(), mapper, model);
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -288,6 +285,14 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	 */
 	public static Class<?> lookupModel(final String indexType) {
 		return modelLookup.get(indexType);
+	}
+
+	public static void startTransportClient() {
+		elasticClientLifecycle.start(true);
+	}
+
+	public static void startJestClient() {
+		elasticClientLifecycle.start(false);
 	}
 
 }
