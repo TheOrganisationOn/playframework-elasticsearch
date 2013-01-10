@@ -1,10 +1,11 @@
 /nohup.out
-.classpath
-.project
-data
+/.classpath
+/.project
+/data
 .settings
 tmp
 dist
 lib
 eclipse
 commands.pyc
+/modules
