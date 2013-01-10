@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import play.Logger;
@@ -113,7 +112,7 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 	}
 
 	@Override
-	public SearchResults<Map> searchAll(String indexName, BoolQueryBuilder query) {
+	public SearchResults<Map> searchAll(String indexName, QueryBuilder query) {
 		Search search = new Search(Search.createQueryWithBuilder(query.toString()));
 		search.addIndex(indexName);
 		try {

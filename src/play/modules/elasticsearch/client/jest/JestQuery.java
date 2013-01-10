@@ -30,7 +30,15 @@ public class JestQuery<T extends Model> extends Query<T> {
 	public SearchResults<T> fetch() {
 		ModelMapper<T> mapper = ElasticSearchPlugin.getMapper(clazz);
 		String index = mapper.getIndexName();
-		Search search = new Search(Search.createQueryWithBuilder(builder.toString()));
+		String queryString = builder.toString();
+		System.err.println("queryString " + queryString);
+		String jsonQuery = Search.createQueryWithBuilder(queryString);
+		System.err.println("queryString json " + jsonQuery);
+		// TODO first count and then use the size of count as size here
+		// TODO issue a request to jest to have it incorporated into 'search' object
+		String sizeQueryString = "{ \"size\" : 1000, \"query\" : " + queryString + "}";
+		System.err.println("queryString with size " + sizeQueryString);
+		Search search = new Search(sizeQueryString);
 		search.addIndex(index);
 		try {
 			JestResult result = ElasticSearchJestClient.tryToExecute(search, "searching", this.jestClient);

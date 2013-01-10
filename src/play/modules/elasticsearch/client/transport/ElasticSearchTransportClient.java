@@ -23,7 +23,6 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.indices.IndexMissingException;
@@ -222,7 +221,7 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 	}
 
 	@Override
-	public SearchResults<Map> searchAll(String indexName, BoolQueryBuilder query) {
+	public SearchResults<Map> searchAll(String indexName, QueryBuilder query) {
 		SearchRequestBuilder builder = client
 				.prepareSearch(indexName)
 				.setSearchType(SearchType.QUERY_THEN_FETCH)
