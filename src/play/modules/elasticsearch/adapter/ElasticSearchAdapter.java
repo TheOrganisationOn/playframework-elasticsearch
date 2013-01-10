@@ -19,6 +19,8 @@
 package play.modules.elasticsearch.adapter;
 
 import io.searchbox.client.JestClient;
+import io.searchbox.client.JestResult;
+import io.searchbox.core.Index;
 import io.searchbox.indices.CreateIndex;
 
 import java.io.IOException;
@@ -28,7 +30,6 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -132,12 +133,6 @@ public abstract class ElasticSearchAdapter {
 			throws IOException {
 		Logger.debug("Index Model: %s", model);
 
-		// Check Client
-		if (client == null) {
-			Logger.error("Elastic Search Client is null, aborting");
-			return;
-		}
-
 		// Define Content Builder
 		XContentBuilder contentBuilder = null;
 
@@ -152,12 +147,22 @@ public abstract class ElasticSearchAdapter {
 			contentBuilder = XContentFactory.jsonBuilder().prettyPrint();
 			mapper.addModel(model, contentBuilder);
 			Logger.debug("Index json: %s", contentBuilder.string());
-			IndexResponse response = client.prepareIndex(indexName, typeName, documentId)
-					.setSource(contentBuilder).execute().actionGet();
+
+			Index index = new Index.Builder(contentBuilder.string()).index(indexName).type(typeName).id(documentId)
+					.build();
+
+			JestResult result = ElasticSearchPlugin.getJestClient().execute(index);
 
 			// Log Debug
-			Logger.debug("Index Response: %s", response);
+			Logger.warn("Index Response: %s", result);
+			if (result.isSucceeded() == false) {
+				Logger.warn("Index Failed : %s", result.getErrorMessage());
+				Logger.warn("Index Failed : %s", result.getJsonString());
+			}
 
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
 			if (contentBuilder != null) {
 				contentBuilder.close();

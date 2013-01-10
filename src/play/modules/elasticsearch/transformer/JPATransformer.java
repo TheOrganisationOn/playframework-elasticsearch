@@ -139,7 +139,7 @@ public class JPATransformer<T extends Model> implements Transformer<T> {
 	 * @param ids
 	 * @return
 	 */
-	private static <T extends Model> List<T> loadFromDb(Class<T> clazz, List<Object> ids) {
+	public static <T extends Model> List<T> loadFromDb(Class<T> clazz, List<Object> ids) {
 		// JPA maps the "id" field to the key automatically
 		List<T> objects = JPQL.instance.find(clazz.getName(), "id in (?1)", new Object[] { ids })
 				.fetch();
