@@ -7,12 +7,10 @@ import io.searchbox.client.JestResult;
 import io.searchbox.client.config.ClientConfig;
 import io.searchbox.client.config.ClientConstants;
 import io.searchbox.core.Index;
-import io.searchbox.core.Search;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.client.Client;
@@ -24,8 +22,6 @@ import play.modules.elasticsearch.Query;
 import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
-
-import com.google.common.collect.Lists;
 
 public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 
@@ -113,17 +109,8 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 
 	@Override
 	public SearchResults<Map> searchAll(String indexName, QueryBuilder query) {
-		Search search = new Search(Search.createQueryWithBuilder(query.toString()));
-		search.addIndex(indexName);
-		try {
-			JestResult result = ElasticSearchJestClient.tryToExecute(search, "searching", this.jestClient);
-			List<Map> sourceAsObjectList = result.getSourceAsObjectList(Map.class);
-			return new SearchResults<Map>(sourceAsObjectList.size(), sourceAsObjectList, null);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return new SearchResults<Map>(0L, Lists.<Map> newArrayList(), null);
+		// TODO think about what 'query encapsulate' - it should not depend on the 'model'
+		return new JestQuery<Model>(Model.class, query, jestClient).fetchDocuments(indexName);
 	}
 
 }
