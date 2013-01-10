@@ -22,14 +22,13 @@ import java.util.List;
 
 import org.elasticsearch.search.facet.Facets;
 
-import play.db.Model;
-
 /**
  * The Class SearchResults.
- *
- * @param <T> the generic type
+ * 
+ * @param <T>
+ *            the generic type
  */
-public class SearchResults<T extends Model> {
+public class SearchResults<T> {
 
 	/** The total count. */
 	public long totalCount;
@@ -37,33 +36,35 @@ public class SearchResults<T extends Model> {
 	/** The objects. */
 	public List<T> objects;
 
-    /** The result scores (same order as the objects). */
-    public List<Float> scores;
+	/** The result scores (same order as the objects). */
+	public List<Float> scores;
 
-    /** The sort values (same order as the objects). */
-    public List<Object[]> sortValues;
+	/** The sort values (same order as the objects). */
+	public List<Object[]> sortValues;
 
-    /** The facets. */
+	/** The facets. */
 	public Facets facets;
-
 
 	/**
 	 * Instantiates a new search results.
-	 *
-	 * @param totalCount the total count
-	 * @param objects the objects
-	 * @param facets the facets
+	 * 
+	 * @param totalCount
+	 *            the total count
+	 * @param objects
+	 *            the objects
+	 * @param facets
+	 *            the facets
 	 */
 	public SearchResults(long totalCount, List<T> objects, Facets facets) {
-        this(totalCount, objects, null, null, facets);
+		this(totalCount, objects, null, null, facets);
 	}
 
-    public SearchResults(long totalCount, List<T> objects, List<Float> scores, List<Object[]> sortValues, Facets facets) {
-        this.totalCount = totalCount;
-        this.objects = objects;
-        this.scores = scores;
-        this.sortValues = sortValues;
-        this.facets = facets;
-    }
+	public SearchResults(long totalCount, List<T> objects, List<Float> scores, List<Object[]> sortValues, Facets facets) {
+		this.totalCount = totalCount;
+		this.objects = objects;
+		this.scores = scores;
+		this.sortValues = sortValues;
+		this.facets = facets;
+	}
 
 }

@@ -3,6 +3,8 @@ package play.modules.elasticsearch.client.transport;
 import static org.elasticsearch.node.NodeBuilder.*;
 
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -11,6 +13,9 @@ import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
@@ -18,11 +23,13 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.search.SearchHit;
 
 import play.Logger;
 import play.Play;
@@ -34,6 +41,8 @@ import play.modules.elasticsearch.mapping.MappingUtil;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
 import play.modules.elasticsearch.util.ExceptionUtil;
+
+import com.google.common.collect.Lists;
 
 public class ElasticSearchTransportClient implements ElasticSearchClientInterface {
 
@@ -212,4 +221,19 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 		return new TransportClientQuery(clazz, query);
 	}
 
+	@Override
+	public SearchResults<Map> searchAll(String indexName, BoolQueryBuilder query) {
+		SearchRequestBuilder builder = client
+				.prepareSearch(indexName)
+				.setSearchType(SearchType.QUERY_THEN_FETCH)
+				.setQuery(query);
+		long total = builder.execute().actionGet().getHits().getTotalHits();
+		SearchResponse response = builder.setSize((int) total).execute().actionGet();
+		SearchHit[] hits = response.hits().getHits();
+		List<Map> maps = Lists.newArrayList();
+		for (SearchHit hit : hits) {
+			maps.add(hit.sourceAsMap());
+		}
+		return new SearchResults<Map>(total, maps, null);
+	}
 }

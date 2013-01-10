@@ -1,6 +1,9 @@
 package play.modules.elasticsearch.client;
 
+import java.util.Map;
+
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import play.db.Model;
@@ -27,5 +30,7 @@ public interface ElasticSearchClientInterface {
 	void indexDocument(String indexName, String typeName, String documentId, String documentJson);
 
 	<T extends Model> Query<T> createQuery(QueryBuilder query, Class<T> clazz);
+
+	SearchResults<Map> searchAll(String indexName, BoolQueryBuilder query);
 
 }

@@ -7,12 +7,16 @@ import io.searchbox.client.JestResult;
 import io.searchbox.client.config.ClientConfig;
 import io.searchbox.client.config.ClientConstants;
 import io.searchbox.core.Index;
+import io.searchbox.core.Search;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
 
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import play.Logger;
@@ -21,6 +25,8 @@ import play.modules.elasticsearch.Query;
 import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
+
+import com.google.common.collect.Lists;
 
 public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 
@@ -104,6 +110,21 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 	@Override
 	public <T extends Model> Query<T> createQuery(QueryBuilder query, Class<T> clazz) {
 		return new JestQuery<T>(clazz, query, jestClient);
+	}
+
+	@Override
+	public SearchResults<Map> searchAll(String indexName, BoolQueryBuilder query) {
+		Search search = new Search(Search.createQueryWithBuilder(query.toString()));
+		search.addIndex(indexName);
+		try {
+			JestResult result = ElasticSearchJestClient.tryToExecute(search, "searching", this.jestClient);
+			List<Map> sourceAsObjectList = result.getSourceAsObjectList(Map.class);
+			return new SearchResults<Map>(sourceAsObjectList.size(), sourceAsObjectList, null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return new SearchResults<Map>(0L, Lists.<Map> newArrayList(), null);
 	}
 
 }
