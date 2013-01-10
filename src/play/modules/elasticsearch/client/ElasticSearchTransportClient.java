@@ -206,4 +206,9 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 		Logger.debug("Index Response: %s", response);
 	}
 
+	@Override
+	public <T extends Model> Query<T> createQuery(QueryBuilder query, Class<T> clazz) {
+		return new Query<T>(clazz, query);
+	}
+
 }

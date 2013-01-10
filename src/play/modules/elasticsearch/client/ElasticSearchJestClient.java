@@ -20,7 +20,9 @@ import org.elasticsearch.index.query.QueryBuilder;
 import play.Logger;
 import play.db.Model;
 import play.modules.elasticsearch.ElasticSearchPlugin;
+import play.modules.elasticsearch.Query;
 import play.modules.elasticsearch.client.jest.IdOnly;
+import play.modules.elasticsearch.client.jest.JestQuery;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
 import play.modules.elasticsearch.transformer.JPATransformer;
@@ -73,6 +75,7 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 
 	@Override
 	public <T extends Model> SearchResults<T> searchAndHydrateAll(QueryBuilder queryBuilder, Class<T> clazz) {
+
 		ModelMapper<T> mapper = ElasticSearchPlugin.getMapper(clazz);
 		String index = mapper.getIndexName();
 		Search search = new Search(Search.createQueryWithBuilder(queryBuilder.toString()));
@@ -117,6 +120,11 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 		if (jestResult.isSucceeded() == false) {
 			Logger.warn("error when %s : $%s", additionalInfo, jestResult.getJsonString());
 		}
+	}
+
+	@Override
+	public <T extends Model> Query<T> createQuery(QueryBuilder query, Class<T> clazz) {
+		return new JestQuery<T>(clazz, query);
 	}
 
 }

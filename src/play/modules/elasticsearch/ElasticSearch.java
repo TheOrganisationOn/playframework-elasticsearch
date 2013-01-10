@@ -42,7 +42,7 @@ public abstract class ElasticSearch {
 	public static Client client() {
 		return ElasticSearchPlugin.client();
 	}
-	
+
 	/**
 	 * Build a SearchRequestBuilder
 	 * 
@@ -58,10 +58,11 @@ public abstract class ElasticSearch {
 	static <T extends Model> SearchRequestBuilder builder(QueryBuilder query, Class<T> clazz) {
 		ModelMapper<T> mapper = ElasticSearchPlugin.getMapper(clazz);
 		String index = mapper.getIndexName();
-		SearchRequestBuilder builder = client().prepareSearch(index).setSearchType(SearchType.QUERY_THEN_FETCH).setQuery(query);
+		SearchRequestBuilder builder = client().prepareSearch(index).setSearchType(SearchType.QUERY_THEN_FETCH)
+				.setQuery(query);
 		return builder;
 	}
-	
+
 	/**
 	 * Build a Query
 	 * 
@@ -75,7 +76,7 @@ public abstract class ElasticSearch {
 	 * @return the query
 	 */
 	public static <T extends Model> Query<T> query(QueryBuilder query, Class<T> clazz) {
-		return new Query<T>(clazz, query);
+		return ElasticSearchPlugin.getClient().createQuery(query, clazz);
 	}
 
 	/**
@@ -92,10 +93,11 @@ public abstract class ElasticSearch {
 	 * 
 	 * @return the search results
 	 */
-	public static <T extends Model> SearchResults<T> search(QueryBuilder query, Class<T> clazz, AbstractFacetBuilder... facets) {
+	public static <T extends Model> SearchResults<T> search(QueryBuilder query, Class<T> clazz,
+			AbstractFacetBuilder... facets) {
 		return search(query, clazz, false, facets);
 	}
-	
+
 	/**
 	 * Search with optional facets. Hydrates entities
 	 * 
@@ -110,10 +112,11 @@ public abstract class ElasticSearch {
 	 * 
 	 * @return the search results
 	 */
-	public static <T extends Model> SearchResults<T> searchAndHydrate(QueryBuilder queryBuilder, Class<T> clazz, AbstractFacetBuilder... facets) {
+	public static <T extends Model> SearchResults<T> searchAndHydrate(QueryBuilder queryBuilder, Class<T> clazz,
+			AbstractFacetBuilder... facets) {
 		return search(queryBuilder, clazz, true, facets);
 	}
-	
+
 	/**
 	 * Faceted search, hydrates entities if asked to do so.
 	 * 
@@ -124,27 +127,28 @@ public abstract class ElasticSearch {
 	 * @param clazz
 	 *            the clazz
 	 * @param hydrate
-	 * 			  hydrate JPA entities
+	 *            hydrate JPA entities
 	 * @param facets
 	 *            the facets
 	 * 
 	 * @return the search results
 	 */
-	private static <T extends Model> SearchResults<T> search(QueryBuilder query, Class<T> clazz, boolean hydrate, AbstractFacetBuilder... facets) {
+	private static <T extends Model> SearchResults<T> search(QueryBuilder query, Class<T> clazz, boolean hydrate,
+			AbstractFacetBuilder... facets) {
 		// Build a query for this search request
 		Query<T> search = query(query, clazz);
-		
+
 		// Control hydration
 		search.hydrate(hydrate);
-		
+
 		// Add facets
-		for( AbstractFacetBuilder facet : facets ) {
+		for (AbstractFacetBuilder facet : facets) {
 			search.addFacet(facet);
 		}
-		
+
 		return search.fetch();
 	}
-	
+
 	/**
 	 * Indexes the given model
 	 * 

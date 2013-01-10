@@ -27,8 +27,8 @@ import play.modules.elasticsearch.transformer.SimpleTransformer;
  */
 public class Query<T extends Model> {
 
-	private final Class<T> clazz;
-	private final QueryBuilder builder;
+	protected final Class<T> clazz;
+	protected final QueryBuilder builder;
 	private final List<AbstractFacetBuilder> facets;
 	private final List<SortBuilder> sorts;
 
@@ -38,7 +38,7 @@ public class Query<T extends Model> {
 	private boolean hydrate = false;
 	private boolean useMapper = false;
 
-	Query(Class<T> clazz, QueryBuilder builder) {
+	public Query(Class<T> clazz, QueryBuilder builder) {
 		Validate.notNull(clazz, "clazz cannot be null");
 		Validate.notNull(builder, "builder cannot be null");
 		this.clazz = clazz;
@@ -150,6 +150,7 @@ public class Query<T extends Model> {
 	 * @return the search results
 	 */
 	public SearchResults<T> fetch() {
+
 		// Build request
 		SearchRequestBuilder request = ElasticSearch.builder(builder, clazz);
 
