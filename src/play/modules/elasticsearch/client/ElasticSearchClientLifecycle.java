@@ -26,7 +26,7 @@ public class ElasticSearchClientLifecycle {
 		return started() == false;
 	}
 
-	// TODO transitive implementation
+	// TODO temporary implementation
 	public Client getTransportClient() {
 		return elasticClient.getInternalClient();
 	}

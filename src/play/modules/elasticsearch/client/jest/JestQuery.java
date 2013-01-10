@@ -33,7 +33,7 @@ public class JestQuery<T extends Model> extends Query<T> {
 		Search search = new Search(Search.createQueryWithBuilder(builder.toString()));
 		search.addIndex(index);
 		try {
-			JestResult result = jestClient.execute(search);
+			JestResult result = ElasticSearchJestClient.tryToExecute(search, "searching", this.jestClient);
 			List<IdOnly> withIds = result.getSourceAsObjectList(IdOnly.class);
 			List<Object> ids = Lists.newArrayList();
 			for (IdOnly withId : withIds) {

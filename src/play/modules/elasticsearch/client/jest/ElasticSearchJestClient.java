@@ -33,6 +33,7 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 		// TODO get from conf
 		servers.add("http://localhost:9200");
 		clientConfig.getServerProperties().put(ClientConstants.SERVER_LIST, servers);
+		clientConfig.getClientFeatures().put(ClientConstants.IS_MULTI_THREADED, true);
 
 		JestClientFactory factory = new JestClientFactory();
 		factory.setClientConfig(clientConfig);
@@ -79,15 +80,22 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 	}
 
 	private void tryToExecute(Action action, String additionalInfoIfNotSucceeded) {
+		tryToExecute(action, additionalInfoIfNotSucceeded, this.jestClient);
+	}
+
+	public static JestResult tryToExecute(Action action, String additionalInfoIfNotSucceeded, JestClient jestClient) {
 		try {
+			System.err.println("is executing in jest " + action);
 			JestResult result = jestClient.execute(action);
 			logIfNotSucceeded(additionalInfoIfNotSucceeded, result);
+			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
-	private void logIfNotSucceeded(String additionalInfo, JestResult jestResult) {
+	private static void logIfNotSucceeded(String additionalInfo, JestResult jestResult) {
 		if (jestResult.isSucceeded() == false) {
 			Logger.warn("error when %s : $%s", additionalInfo, jestResult.getJsonString());
 		}
