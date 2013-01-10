@@ -29,6 +29,7 @@ import play.Play;
 import play.db.Model;
 import play.modules.elasticsearch.ElasticSearch;
 import play.modules.elasticsearch.Query;
+import play.modules.elasticsearch.client.transport.TransportClientQuery;
 import play.modules.elasticsearch.mapping.MappingUtil;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
@@ -208,7 +209,7 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 
 	@Override
 	public <T extends Model> Query<T> createQuery(QueryBuilder query, Class<T> clazz) {
-		return new Query<T>(clazz, query);
+		return new TransportClientQuery(clazz, query);
 	}
 
 }

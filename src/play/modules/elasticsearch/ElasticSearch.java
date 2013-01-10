@@ -55,7 +55,7 @@ public abstract class ElasticSearch {
 	 * 
 	 * @return the search request builder
 	 */
-	static <T extends Model> SearchRequestBuilder builder(QueryBuilder query, Class<T> clazz) {
+	public static <T extends Model> SearchRequestBuilder builder(QueryBuilder query, Class<T> clazz) {
 		ModelMapper<T> mapper = ElasticSearchPlugin.getMapper(clazz);
 		String index = mapper.getIndexName();
 		SearchRequestBuilder builder = client().prepareSearch(index).setSearchType(SearchType.QUERY_THEN_FETCH)
