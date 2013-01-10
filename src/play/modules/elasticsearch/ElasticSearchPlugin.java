@@ -165,7 +165,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		if (!indicesStarted.contains(clazz)) {
 			final ModelMapper<Model> mapper = getMapper(clazz);
 			Logger.info("Start Index for Class: %s", clazz);
-			ElasticSearchAdapter.startIndex(client(), mapper);
+			ElasticSearchAdapter.startIndex(ElasticSearchPlugin.getClient(), mapper);
 			indicesStarted.add(clazz);
 		}
 	}

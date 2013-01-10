@@ -20,23 +20,16 @@ package play.modules.elasticsearch.adapter;
 
 import java.io.IOException;
 
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.indices.IndexAlreadyExistsException;
 
 import play.Logger;
 import play.db.Model;
-import play.modules.elasticsearch.mapping.MappingUtil;
+import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.mapping.ModelMapper;
-import play.modules.elasticsearch.util.ExceptionUtil;
 
 /**
  * The Class ElasticSearchAdapter.
@@ -51,9 +44,9 @@ public abstract class ElasticSearchAdapter {
 	 * @param mapper
 	 *            the model mapper
 	 */
-	public static <T> void startIndex(Client client, ModelMapper<T> mapper) {
-		createIndex(client, mapper);
-		createType(client, mapper);
+	public static <T> void startIndex(ElasticSearchClientInterface clientInterface, ModelMapper<T> mapper) {
+		createIndex(clientInterface, mapper);
+		createType(clientInterface, mapper);
 	}
 
 	/**
@@ -64,21 +57,10 @@ public abstract class ElasticSearchAdapter {
 	 * @param mapper
 	 *            the model mapper
 	 */
-	private static void createIndex(Client client, ModelMapper<?> mapper) {
+	private static void createIndex(ElasticSearchClientInterface client, ModelMapper<?> mapper) {
 		String indexName = mapper.getIndexName();
 
-		try {
-			Logger.debug("Starting Elastic Search Index %s", indexName);
-			CreateIndexResponse response = client.admin().indices()
-					.create(new CreateIndexRequest(indexName)).actionGet();
-			Logger.debug("Response: %s", response);
-
-		} catch (IndexAlreadyExistsException iaee) {
-			Logger.debug("Index already exists: %s", indexName);
-
-		} catch (Throwable t) {
-			Logger.warn(ExceptionUtil.getStackTrace(t));
-		}
+		client.createIndex(indexName);
 	}
 
 	/**
@@ -89,25 +71,11 @@ public abstract class ElasticSearchAdapter {
 	 * @param mapper
 	 *            the model mapper
 	 */
-	private static void createType(Client client, ModelMapper<?> mapper) {
+	private static void createType(ElasticSearchClientInterface client, ModelMapper<?> mapper) {
 		String indexName = mapper.getIndexName();
 		String typeName = mapper.getTypeName();
 
-		try {
-			Logger.debug("Create Elastic Search Type %s/%s", indexName, typeName);
-			PutMappingRequest request = Requests.putMappingRequest(indexName).type(typeName);
-			XContentBuilder mapping = MappingUtil.getMapping(mapper);
-			Logger.debug("Type mapping: \n %s", mapping.string());
-			request.source(mapping);
-			PutMappingResponse response = client.admin().indices().putMapping(request).actionGet();
-			Logger.debug("Response: %s", response);
-
-		} catch (IndexAlreadyExistsException iaee) {
-			Logger.debug("Index already exists: %s", indexName);
-
-		} catch (Throwable t) {
-			Logger.warn(ExceptionUtil.getStackTrace(t));
-		}
+		client.createType(indexName, typeName, mapper);
 	}
 
 	/**

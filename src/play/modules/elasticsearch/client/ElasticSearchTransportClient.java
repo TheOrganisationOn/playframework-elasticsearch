@@ -4,18 +4,26 @@ import static org.elasticsearch.node.NodeBuilder.*;
 
 import java.util.Enumeration;
 
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
 import play.Logger;
 import play.Play;
-import play.modules.elasticsearch.ElasticSearchPlugin;
+import play.modules.elasticsearch.mapping.MappingUtil;
+import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.util.ExceptionUtil;
 
 public class ElasticSearchTransportClient implements ElasticSearchClientInterface {
@@ -122,9 +130,42 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 	@Override
 	public void deleteIndex(String indexName) {
 		try {
-			ElasticSearchPlugin.client().admin().indices().prepareDelete(indexName).execute().actionGet();
+			client.admin().indices().prepareDelete(indexName).execute().actionGet();
 		} catch (IndexMissingException e) {
 			// TODO what to do with exceptions from underlaying api
+		}
+	}
+
+	@Override
+	public void createIndex(String indexName) {
+		try {
+			Logger.debug("Starting Elastic Search Index %s", indexName);
+			CreateIndexResponse response = client.admin().indices().create(new CreateIndexRequest(indexName))
+					.actionGet();
+			Logger.debug("Response: %s", response);
+		} catch (IndexAlreadyExistsException iaee) {
+			Logger.debug("Index already exists: %s", indexName);
+		} catch (Throwable t) {
+			Logger.warn(ExceptionUtil.getStackTrace(t));
+		}
+	}
+
+	@Override
+	public void createType(String indexName, String typeName, ModelMapper<?> mapper) {
+		try {
+			Logger.debug("Create Elastic Search Type %s/%s", indexName, typeName);
+			PutMappingRequest request = Requests.putMappingRequest(indexName).type(typeName);
+			XContentBuilder mapping = MappingUtil.getMapping(mapper);
+			Logger.debug("Type mapping: \n %s", mapping.string());
+			request.source(mapping);
+			PutMappingResponse response = client.admin().indices().putMapping(request).actionGet();
+			Logger.debug("Response: %s", response);
+
+		} catch (IndexAlreadyExistsException iaee) {
+			Logger.debug("Index already exists: %s", indexName);
+
+		} catch (Throwable t) {
+			Logger.warn(ExceptionUtil.getStackTrace(t));
 		}
 	}
 
