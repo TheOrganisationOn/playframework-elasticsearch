@@ -96,7 +96,7 @@ public abstract class ElasticSearchAdapter {
 			mapper.addModel(object, contentBuilder);
 			Logger.debug("Index json: %s", contentBuilder.string());
 
-			client.indexDocument(indexName, typeName, documentId, contentBuilder.toString());
+			client.indexDocument(indexName, typeName, documentId, contentBuilder.string());
 
 		} finally {
 			if (contentBuilder != null) {

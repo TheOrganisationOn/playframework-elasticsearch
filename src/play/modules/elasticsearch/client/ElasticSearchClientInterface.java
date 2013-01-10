@@ -11,7 +11,7 @@ public interface ElasticSearchClientInterface {
 
 	void start();
 
-	Client getIntenalClient();
+	Client getInternalClient();
 
 	void deleteIndex(String indexName);
 

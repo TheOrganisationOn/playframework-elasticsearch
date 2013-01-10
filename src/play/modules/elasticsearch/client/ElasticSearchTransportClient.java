@@ -131,7 +131,7 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 	}
 
 	@Override
-	public Client getIntenalClient() {
+	public Client getInternalClient() {
 		return client;
 	}
 

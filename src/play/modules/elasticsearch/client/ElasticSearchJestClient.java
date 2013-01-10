@@ -1,10 +1,13 @@
 package play.modules.elasticsearch.client;
 
+import io.searchbox.Action;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.JestResult;
 import io.searchbox.client.config.ClientConfig;
 import io.searchbox.client.config.ClientConstants;
+import io.searchbox.core.Index;
+import io.searchbox.core.Search;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
 
@@ -16,8 +19,11 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 import play.Logger;
 import play.db.Model;
+import play.modules.elasticsearch.ElasticSearchPlugin;
+import play.modules.elasticsearch.client.jest.IdOnly;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
+import play.modules.elasticsearch.transformer.JPATransformer;
 
 import com.google.common.collect.Lists;
 
@@ -39,34 +45,18 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 	}
 
 	@Override
-	public Client getIntenalClient() {
+	public Client getInternalClient() {
 		throw new IllegalArgumentException("no transport client in jest impl");
 	}
 
 	@Override
 	public void deleteIndex(String indexName) {
-		try {
-			JestResult jestResult = jestClient.execute(new DeleteIndex(indexName));
-			logIfNotSucceeded("creating index " + indexName, jestResult);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		tryToExecute(new DeleteIndex(indexName), "deleting index " + indexName);
 	}
 
 	@Override
 	public void createIndex(String indexName) {
-		try {
-			JestResult jestResult = jestClient.execute(new CreateIndex(indexName));
-			logIfNotSucceeded("creating index " + indexName, jestResult);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void logIfNotSucceeded(String additionalInfo, JestResult jestResult) {
-		if (jestResult.isSucceeded() == false) {
-			Logger.warn("error when %s : $%s", additionalInfo, jestResult.getJsonString());
-		}
+		tryToExecute(new CreateIndex(indexName), "creating index " + indexName);
 	}
 
 	@Override
@@ -83,13 +73,50 @@ public class ElasticSearchJestClient implements ElasticSearchClientInterface {
 
 	@Override
 	public <T extends Model> SearchResults<T> searchAndHydrateAll(QueryBuilder queryBuilder, Class<T> clazz) {
-		return new SearchResults<T>(0, (List<T>) Lists.newArrayList(), null);
+		ModelMapper<T> mapper = ElasticSearchPlugin.getMapper(clazz);
+		String index = mapper.getIndexName();
+		Search search = new Search(Search.createQueryWithBuilder(queryBuilder.toString()));
+		search.addIndex(index);
+		try {
+			JestResult result = jestClient.execute(search);
+			List<IdOnly> withIds = result.getSourceAsObjectList(IdOnly.class);
+			List<Object> ids = Lists.newArrayList();
+			for (IdOnly withId : withIds) {
+				System.err.println("got object with id " + withId.id);
+				ids.add(withId.id);
+			}
+			if (ids.isEmpty() == false) {
+				List<T> modelObjects = JPATransformer.loadFromDb(clazz, ids);
+				// TODO sort by order
+				return new SearchResults<T>(modelObjects.size(), modelObjects, null);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return new SearchResults<T>(0L, Lists.<T> newArrayList(), null);
 	}
 
 	@Override
 	public void indexDocument(String indexName, String typeName, String documentId, String documentJson) {
-		// TODO Auto-generated method stub
+		Index index = new Index.Builder(documentJson).index(indexName).type(typeName).id(documentId)
+				.build();
+		tryToExecute(index, "indexing in " + indexName + " a doc " + documentJson);
+	}
 
+	private void tryToExecute(Action action, String additionalInfoIfNotSucceeded) {
+		try {
+			JestResult result = jestClient.execute(action);
+			logIfNotSucceeded(additionalInfoIfNotSucceeded, result);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void logIfNotSucceeded(String additionalInfo, JestResult jestResult) {
+		if (jestResult.isSucceeded() == false) {
+			Logger.warn("error when %s : $%s", additionalInfo, jestResult.getJsonString());
+		}
 	}
 
 }
