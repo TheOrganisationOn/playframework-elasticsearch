@@ -10,6 +10,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
@@ -194,6 +195,15 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 		search.hydrate(true);
 		search.size((int) numberOfResults);
 		return search.fetch();
+	}
+
+	@Override
+	public void indexDocument(String indexName, String typeName, String documentId, String documentJson) {
+		IndexResponse response = client.prepareIndex(indexName, typeName, documentId)
+				.setSource(documentJson).execute().actionGet();
+
+		// Log Debug
+		Logger.debug("Index Response: %s", response);
 	}
 
 }

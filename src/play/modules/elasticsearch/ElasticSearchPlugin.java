@@ -258,7 +258,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
 
-				ElasticSearchAdapter.indexModel(client(), mapper, model);
+				ElasticSearchAdapter.indexModel(getClient(), mapper, model);
 			}
 			while ((model = blockedDeleteOperations.poll()) != null) {
 				@SuppressWarnings("unchecked")

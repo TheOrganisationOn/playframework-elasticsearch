@@ -21,7 +21,6 @@ package play.modules.elasticsearch.adapter;
 import java.io.IOException;
 
 import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -78,29 +77,9 @@ public abstract class ElasticSearchAdapter {
 		client.createType(indexName, typeName, mapper);
 	}
 
-	/**
-	 * Index model.
-	 * 
-	 * @param <T>
-	 *            the generic type
-	 * @param client
-	 *            the client
-	 * @param mapper
-	 *            the model mapper
-	 * @param model
-	 *            the model
-	 * @throws Exception
-	 *             the exception
-	 */
-	public static <T> void indexModel(Client client, ModelMapper<T> mapper, T model)
+	public static <T> void indexModel(ElasticSearchClientInterface client, ModelMapper<T> mapper, T object)
 			throws IOException {
-		Logger.debug("Index Model: %s", model);
-
-		// Check Client
-		if (client == null) {
-			Logger.error("Elastic Search Client is null, aborting");
-			return;
-		}
+		Logger.debug("Index Model: %s", object);
 
 		// Define Content Builder
 		XContentBuilder contentBuilder = null;
@@ -110,17 +89,14 @@ public abstract class ElasticSearchAdapter {
 			// Define Index Name
 			String indexName = mapper.getIndexName();
 			String typeName = mapper.getTypeName();
-			String documentId = mapper.getDocumentId(model);
+			String documentId = mapper.getDocumentId(object);
 			Logger.debug("Index Name: %s", indexName);
 
 			contentBuilder = XContentFactory.jsonBuilder().prettyPrint();
-			mapper.addModel(model, contentBuilder);
+			mapper.addModel(object, contentBuilder);
 			Logger.debug("Index json: %s", contentBuilder.string());
-			IndexResponse response = client.prepareIndex(indexName, typeName, documentId)
-					.setSource(contentBuilder).execute().actionGet();
 
-			// Log Debug
-			Logger.debug("Index Response: %s", response);
+			client.indexDocument(indexName, typeName, documentId, contentBuilder.toString());
 
 		} finally {
 			if (contentBuilder != null) {

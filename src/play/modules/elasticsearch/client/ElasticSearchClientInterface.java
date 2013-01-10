@@ -23,4 +23,6 @@ public interface ElasticSearchClientInterface {
 
 	<T extends Model> SearchResults<T> searchAndHydrateAll(QueryBuilder queryBuilder, Class<T> clazz);
 
+	void indexDocument(String indexName, String typeName, String documentId, String documentJson);
+
 }

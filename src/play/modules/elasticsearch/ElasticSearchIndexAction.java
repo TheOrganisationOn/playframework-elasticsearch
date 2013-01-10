@@ -18,11 +18,10 @@
  */
 package play.modules.elasticsearch;
 
-import org.elasticsearch.client.Client;
-
 import play.Logger;
 import play.db.Model;
 import play.modules.elasticsearch.adapter.ElasticSearchAdapter;
+import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.util.ExceptionUtil;
 
@@ -41,7 +40,7 @@ public class ElasticSearchIndexAction implements play.libs.F.Action<ElasticSearc
 		// Log Debug
 		Logger.debug("Elastic Search - %s Event", message);
 
-		Client client = ElasticSearchPlugin.client();
+		ElasticSearchClientInterface client = ElasticSearchPlugin.getClient();
 		Model object = message.getObject();
 		@SuppressWarnings("unchecked")
 		ModelMapper<Model> mapper = (ModelMapper<Model>) ElasticSearchPlugin.getMapper(object.getClass());
@@ -53,7 +52,7 @@ public class ElasticSearchIndexAction implements play.libs.F.Action<ElasticSearc
 				ElasticSearchAdapter.indexModel(client, mapper, object);
 				break;
 			case DELETE:
-				ElasticSearchAdapter.deleteModel(client, mapper, object);
+				ElasticSearchAdapter.deleteModel(ElasticSearchPlugin.client(), mapper, object);
 				break;
 			}
 		} catch (Throwable t) {
