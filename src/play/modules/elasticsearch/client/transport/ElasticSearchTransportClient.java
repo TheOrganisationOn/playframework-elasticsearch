@@ -1,4 +1,4 @@
-package play.modules.elasticsearch.client;
+package play.modules.elasticsearch.client.transport;
 
 import static org.elasticsearch.node.NodeBuilder.*;
 
@@ -29,7 +29,7 @@ import play.Play;
 import play.db.Model;
 import play.modules.elasticsearch.ElasticSearch;
 import play.modules.elasticsearch.Query;
-import play.modules.elasticsearch.client.transport.TransportClientQuery;
+import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.mapping.MappingUtil;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;

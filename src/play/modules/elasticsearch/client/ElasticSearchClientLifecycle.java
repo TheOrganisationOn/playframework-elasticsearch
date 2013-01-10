@@ -2,6 +2,9 @@ package play.modules.elasticsearch.client;
 
 import org.elasticsearch.client.Client;
 
+import play.modules.elasticsearch.client.jest.ElasticSearchJestClient;
+import play.modules.elasticsearch.client.transport.ElasticSearchTransportClient;
+
 public class ElasticSearchClientLifecycle {
 
 	ElasticSearchClientInterface elasticClient;

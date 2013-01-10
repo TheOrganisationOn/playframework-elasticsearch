@@ -1,4 +1,4 @@
-package play.modules.elasticsearch.client;
+package play.modules.elasticsearch.client.jest;
 
 import io.searchbox.Action;
 import io.searchbox.client.JestClient;
@@ -18,7 +18,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import play.Logger;
 import play.db.Model;
 import play.modules.elasticsearch.Query;
-import play.modules.elasticsearch.client.jest.JestQuery;
+import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.mapping.ModelMapper;
 import play.modules.elasticsearch.search.SearchResults;
 
