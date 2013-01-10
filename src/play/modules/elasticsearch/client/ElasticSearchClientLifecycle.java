@@ -14,8 +14,7 @@ public class ElasticSearchClientLifecycle {
 		if (useTransportClient) {
 			elasticClient = new ElasticSearchTransportClient();
 		} else {
-			elasticClient = null;
-			// todo Jest impl;
+			elasticClient = new ElasticSearchJestClient();
 		}
 		elasticClient.start();
 	}
@@ -27,6 +26,10 @@ public class ElasticSearchClientLifecycle {
 	// TODO transitive implementation
 	public Client getTransportClient() {
 		return elasticClient.getIntenalClient();
+	}
+
+	public ElasticSearchClientInterface getClient() {
+		return elasticClient;
 	}
 
 }

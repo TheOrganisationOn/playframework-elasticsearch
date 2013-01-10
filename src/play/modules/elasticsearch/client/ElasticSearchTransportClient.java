@@ -9,11 +9,13 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
 import play.Logger;
 import play.Play;
+import play.modules.elasticsearch.ElasticSearchPlugin;
 import play.modules.elasticsearch.util.ExceptionUtil;
 
 public class ElasticSearchTransportClient implements ElasticSearchClientInterface {
@@ -115,6 +117,15 @@ public class ElasticSearchTransportClient implements ElasticSearchClientInterfac
 	@Override
 	public Client getIntenalClient() {
 		return client;
+	}
+
+	@Override
+	public void deleteIndex(String indexName) {
+		try {
+			ElasticSearchPlugin.client().admin().indices().prepareDelete(indexName).execute().actionGet();
+		} catch (IndexMissingException e) {
+			// TODO what to do with exceptions from underlaying api
+		}
 	}
 
 }

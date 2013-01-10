@@ -8,4 +8,6 @@ public interface ElasticSearchClientInterface {
 
 	Client getIntenalClient();
 
+	void deleteIndex(String indexName);
+
 }

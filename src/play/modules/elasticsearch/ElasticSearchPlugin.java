@@ -34,6 +34,7 @@ import play.PlayPlugin;
 import play.db.Model;
 import play.modules.elasticsearch.ElasticSearchIndexEvent.Type;
 import play.modules.elasticsearch.adapter.ElasticSearchAdapter;
+import play.modules.elasticsearch.client.ElasticSearchClientInterface;
 import play.modules.elasticsearch.client.ElasticSearchClientLifecycle;
 import play.modules.elasticsearch.mapping.MapperFactory;
 import play.modules.elasticsearch.mapping.MappingUtil;
@@ -293,6 +294,10 @@ public class ElasticSearchPlugin extends PlayPlugin {
 
 	public static void startJestClient() {
 		elasticClientLifecycle.start(false);
+	}
+
+	public static ElasticSearchClientInterface getClient() {
+		return elasticClientLifecycle.getClient();
 	}
 
 }
