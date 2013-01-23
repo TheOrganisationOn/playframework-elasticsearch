@@ -29,6 +29,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.lang.Validate;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -87,8 +90,32 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	 * 
 	 * @return the client
 	 */
-	public static Client client() {
+	public synchronized static Client client() {
+		if (client == null) {
+			initClient();
+			waitForClusterToBeReady();
+		}
 		return client;
+	}
+
+	private static void waitForClusterToBeReady() {
+		while (clusterNotReady()) {
+			waitAMoment();
+		}
+	}
+
+	private static void waitAMoment() {
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static boolean clusterNotReady() {
+		ClusterHealthRequest clusterHealthRequest = client.admin().cluster().prepareHealth().request();
+		ClusterHealthResponse clusterHealthResponse = client.admin().cluster().health(clusterHealthRequest).actionGet();
+		return clusterHealthResponse.status() == ClusterHealthStatus.RED;
 	}
 
 	public static void setMapperFactory(final MapperFactory factory) {
@@ -105,7 +132,7 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	 * 
 	 * @return true, if is local mode
 	 */
-	private boolean isLocalMode() {
+	private static boolean isLocalMode() {
 		try {
 			final String client = Play.configuration.getProperty("elasticsearch.client");
 			final Boolean local = Boolean.getBoolean(Play.configuration.getProperty("elasticsearch.local", "true"));
@@ -168,6 +195,12 @@ public class ElasticSearchPlugin extends PlayPlugin {
 
 		mapperFactory = new DefaultMapperFactory(getIndexPrefix());
 
+		// Bind Admin
+		Router.addRoute("GET", "/es-admin", "elasticsearch.ElasticSearchAdmin.index");
+
+	}
+
+	private static void initClient() {
 		ReflectionUtil.clearCache();
 
 		// Make sure it doesn't get started more than once
@@ -194,11 +227,12 @@ public class ElasticSearchPlugin extends PlayPlugin {
 		settings.build();
 
 		// Check Model
-		if (this.isLocalMode()) {
+		if (isLocalMode()) {
 			Logger.info("Starting Elastic Search for Play! in Local Mode");
 			final NodeBuilder nb = nodeBuilder().settings(settings).local(true).client(false).data(true);
 			final Node node = nb.node();
 			client = node.client();
+			Logger.info("Local client assigned");
 
 		} else {
 			Logger.info("Connecting Play! to Elastic Search in Client Mode");
@@ -226,9 +260,6 @@ public class ElasticSearchPlugin extends PlayPlugin {
 			}
 			client = c;
 		}
-
-		// Bind Admin
-		Router.addRoute("GET", "/es-admin", "elasticsearch.ElasticSearchAdmin.index");
 
 		// Check Client
 		if (client == null) {
@@ -355,12 +386,12 @@ public class ElasticSearchPlugin extends PlayPlugin {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
 
-				ElasticSearchAdapter.indexModel(client, mapper, model);
+				ElasticSearchAdapter.indexModel(client(), mapper, model);
 			}
 			while ((model = blockedDeleteOperations.poll()) != null) {
 				@SuppressWarnings("unchecked")
 				final ModelMapper<Model> mapper = (ModelMapper<Model>) getMapper(model.getClass());
-				ElasticSearchAdapter.deleteModel(client, mapper, model);
+				ElasticSearchAdapter.deleteModel(client(), mapper, model);
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();
