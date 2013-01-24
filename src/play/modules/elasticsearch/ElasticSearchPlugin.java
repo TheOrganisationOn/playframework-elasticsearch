@@ -29,10 +29,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.lang.Validate;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.ImmutableSettings.Builder;
@@ -113,9 +115,16 @@ public class ElasticSearchPlugin extends PlayPlugin {
 	}
 
 	private static boolean clusterNotReady() {
-		ClusterHealthRequest clusterHealthRequest = client.admin().cluster().prepareHealth().request();
-		ClusterHealthResponse clusterHealthResponse = client.admin().cluster().health(clusterHealthRequest).actionGet();
-		return clusterHealthResponse.status() == ClusterHealthStatus.RED;
+		try {
+			ClusterHealthRequest clusterHealthRequest = client.admin().cluster().prepareHealth().request();
+			ClusterHealthResponse clusterHealthResponse = client.admin().cluster().health(clusterHealthRequest)
+					.actionGet();
+			Logger.info("checked ES cluster health: %s", ReflectionToStringBuilder.toString(clusterHealthResponse));
+			return clusterHealthResponse.status() == ClusterHealthStatus.RED;
+		} catch (NoNodeAvailableException e) {
+			Logger.error(e, "no node available when checking ES cluster health");
+			return true;
+		}
 	}
 
 	public static void setMapperFactory(final MapperFactory factory) {
