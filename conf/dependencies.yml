@@ -1,11 +1,11 @@
-self: custom-modules -> elasticsearch 0.5.5
+self: custom-modules -> elasticsearch 0.5.6
 
 # Application dependencies
 
 require:
     - play
     - play -> crud
-    - org.elasticsearch -> elasticsearch 0.19.3
+    - org.elasticsearch -> elasticsearch 0.19.11
     - se.scalablesolutions.akka -> akka-amqp 1.1.2
     
     
